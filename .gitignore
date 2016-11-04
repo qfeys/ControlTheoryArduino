@@ -338,3 +338,4 @@ $RECYCLE.BIN/
 *.sln
 *.vcxproj
 *.xml
+Arduino/ArduinoProject/__vm/.ArduinoProject.vsarduino.h
