@@ -335,3 +335,6 @@ $RECYCLE.BIN/
 *.exe
 *.out
 *.app
+*.sln
+*.vcxproj
+*.xml

@@ -14,6 +14,7 @@
 #include <encoder_sensor.h>
 #include <sharp41S.h>
 #include <l293d.h>
+#include "Controller.h"
 
 class Robot
 {
@@ -37,12 +38,16 @@ private:
 	bool toggleButton(uint8_t button);
 	bool controlEnabled();
 
-	// State memory
-	float e1;
-	float e2;
-	float u1;
-	float u2;
-	float t;
+	// Controllers
+	float Ts = 0.01;
+	Controller posControl;
+	Controller velControl;
+
+	// Memory
+	int posa1;
+	int posa2;
+	int posb1;
+	int posb2;
 
 public:
 	Robot(uint8_t ID = 0);

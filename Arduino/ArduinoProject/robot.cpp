@@ -1,4 +1,5 @@
 #include "robot.h"
+#include "Controller.h"
 #include <math.h>
 
 #define ENC1_PINA		18
@@ -37,25 +38,30 @@ void Robot::init() {
 	//initialize the robot - sort of starting procedure
 	resetEncoders();
 	resetPendulum();
-	e1 = 0;
-	e2 = 0;
-	u1 = 0;
-	u2 = 0;
-	t = 0;
+	velControl.Set(10, 1, Ts);
+	posControl.Set(20, 1, Ts);
 }
 
 void Robot::controllerHook() {
 	//do something that is periodic: reading from sensors, setting the motors, updating variables sent to the pc..
 
+	// Read sensors
 	int enc1_value = _encoder1->readRawValue();
 	int enc2_value = -_encoder2->readRawValue();
-	int enc3_value = _pendulum->readRawValue();
+	int pend_value = _pendulum->readRawValue();
+
+	// Calculate velocity
+	float va = (enc1_value - posa1) / Ts;
+	float vb = (enc2_value - posb1) / Ts;
+
 	System.setGPoutInt(0, enc1_value);
 	System.setGPoutInt(1, enc2_value);
-	System.setGPoutInt(2, enc3_value);
+	System.setGPoutInt(2, pend_value);
+	System.setGPoutFloat(0, va);
 
 
-	if (controlEnabled()) {
+	if (controlEnabled())
+	{
 		//write the control in here
    //int a = System.getGPinInt(0);
    //float b = System.getGPinFloat(0);
@@ -64,29 +70,18 @@ void Robot::controllerHook() {
 
 
 		int setPoint = System.getGPinInt(1);
-		float Kp = 130000;
-		float Ki = 600000;
-		float Kd = 2000;
-		float Ts = 0.01;
-		t += Ts;
 
-		setPoint = sin(t/2)*2000;
+		float errPos = enc1_value - setPoint;
 
-		float e = enc1_value - setPoint;
-		/*float u = (2 * Kp*Ts + 2 * Ki*Ts*Ts + 4 * Kd) / (2 * Ts)*e +
-			(2 * Ki*Ts*Ts - 8 * Kd) / (2 * Ts)*e1 +
-			(-2 * Kp*Ts + 2 * Ki*Ts*Ts + 4 * Kd) / (2 * Ts)*e2 -
-			u2;*/
-		float u = -e * Kp / 100000;
-		e2 = e1;
-		e1 = e;
-		u2 = u1;
-		u1 = u;
-		if (u > 10) { u += 3000; }
-		else if (u < -10) { u -= 3000; }
-		System.setGPoutFloat(0, u);
-		System.setGPoutFloat(1, e);
-		System.setGPoutFloat(2, setPoint);
+		float vSet = posControl.NextState(errPos);
+		float errVel = va - vSet;
+		float u = velControl.NextState(errVel);
+
+		if (u > 10) { u += 2800; } else if (u < -10) { u -= 2800; }
+		System.setGPoutFloat(1, errPos);
+		System.setGPoutFloat(2, errVel);
+		System.setGPoutFloat(3, vSet);
+		System.setGPoutFloat(4, u);
 
 		_motor1->setBridgeVoltage(u);
 		_motor2->setBridgeVoltage(-u);
