@@ -24,7 +24,7 @@ float Controller::NextState(float error)
 void Controller::Set(float undamptFreq, float damping, float sampleTime)
 {
 	a = sampleTime*sampleTime*undamptFreq*undamptFreq;
-	b = 2 * damping*undamptFreq*sampleTime;
+	b = 4 * damping*undamptFreq;
 }
 
 Controller::~Controller()

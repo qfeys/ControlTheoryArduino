@@ -38,8 +38,8 @@ void Robot::init() {
 	//initialize the robot - sort of starting procedure
 	resetEncoders();
 	resetPendulum();
-	velControl.Set(10, 1, Ts);
-	posControl.Set(20, 1, Ts);
+	velControl.Set(20, 1, Ts);
+	posControl.Set(10, 1, Ts);
 }
 
 void Robot::controllerHook() {
@@ -54,11 +54,13 @@ void Robot::controllerHook() {
 	float va = (enc1_value - posa1) / Ts;
 	float vb = (enc2_value - posb1) / Ts;
 
+	posa1 = enc1_value;
+	posb1 = enc2_value;
+
 	System.setGPoutInt(0, enc1_value);
 	System.setGPoutInt(1, enc2_value);
 	System.setGPoutInt(2, pend_value);
 	System.setGPoutFloat(0, va);
-
 
 	if (controlEnabled())
 	{
@@ -69,19 +71,23 @@ void Robot::controllerHook() {
    //_motor2 -> setBridgeVoltage(-3000 - a * 500 + b *500); 
 
 
-		int setPoint = System.getGPinInt(1);
+		//int setPoint = System.getGPinInt(1);
 
-		float errPos = enc1_value - setPoint;
+		//float errPos = enc1_value - setPoint;
 
-		float vSet = posControl.NextState(errPos);
+		//float vSet = posControl.NextState(errPos);
+		float vSet = System.getGPinInt(1);
 		float errVel = va - vSet;
 		float u = velControl.NextState(errVel);
 
 		if (u > 10) { u += 2800; } else if (u < -10) { u -= 2800; }
-		System.setGPoutFloat(1, errPos);
+		//System.setGPoutFloat(1, errPos);
 		System.setGPoutFloat(2, errVel);
 		System.setGPoutFloat(3, vSet);
 		System.setGPoutFloat(4, u);
+
+		if (u > 6000) u = 6000;
+		if (u < -6000) u = -6000;
 
 		_motor1->setBridgeVoltage(u);
 		_motor2->setBridgeVoltage(-u);
@@ -91,6 +97,12 @@ void Robot::controllerHook() {
 		//set motor voltage to zero or it will keep on running...
 		_motor1->setBridgeVoltage(0);
 		_motor2->setBridgeVoltage(0);
+	}
+	if (testEnabled())
+	{
+		//set motor voltage to max value
+		_motor1->setBridgeVoltage(6000);
+		_motor2->setBridgeVoltage(-6000);
 	}
 }
 
@@ -127,6 +139,11 @@ bool Robot::controlEnabled()
 	return _button_states[0];
 }
 
+bool Robot::testEnabled()
+{
+	return _button_states[2];
+}
+
 void Robot::button1callback()
 {
 	if (toggleButton(0)) {
@@ -148,7 +165,13 @@ void Robot::button2callback()
 }
 void Robot::button3callback()
 {
-	toggleButton(2);
+	if (toggleButton(2))
+	{
+		System.println("Test enabled.");
+	} else
+	{
+		System.println("Test disabled.");
+	}
 }
 
 void Robot::button4callback()

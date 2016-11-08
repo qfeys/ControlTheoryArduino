@@ -37,6 +37,7 @@ private:
 	bool _button_states[8] = { false,false,false,false,false,false,false,false };
 	bool toggleButton(uint8_t button);
 	bool controlEnabled();
+	bool testEnabled();
 
 	// Controllers
 	float Ts = 0.01;
