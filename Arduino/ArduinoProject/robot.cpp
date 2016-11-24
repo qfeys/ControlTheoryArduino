@@ -38,7 +38,7 @@ void Robot::init() {
 	//initialize the robot - sort of starting procedure
 	resetEncoders();
 	resetPendulum();
-	velControl.Set(20, 1, Ts);
+	velControl.Set(8, 1, Ts);
 	posControl.Set(10, 1, Ts);
 }
 
@@ -46,8 +46,8 @@ void Robot::controllerHook() {
 	//do something that is periodic: reading from sensors, setting the motors, updating variables sent to the pc..
 
 	// Read sensors
-	int enc1_value = _encoder1->readRawValue();
-	int enc2_value = -_encoder2->readRawValue();
+	int enc1_value = -_encoder1->readRawValue();
+	int enc2_value = _encoder2->readRawValue();
 	int pend_value = _pendulum->readRawValue();
 
 	// Calculate velocity
@@ -70,39 +70,60 @@ void Robot::controllerHook() {
    //_motor1 -> setBridgeVoltage(3000 + a * 500 + b*500); 
    //_motor2 -> setBridgeVoltage(-3000 - a * 500 + b *500); 
 
-
+		/// Set Points
 		//int setPoint = System.getGPinInt(1);
 
 		//float errPos = enc1_value - setPoint;
 
 		//float vSet = posControl.NextState(errPos);
 		float vSet = System.getGPinInt(1);
-		float errVel = va - vSet;
+		float errVel = vSet*1.35 - va;
 		float u = velControl.NextState(errVel);
 
-		if (u > 10) { u += 2800; } else if (u < -10) { u -= 2800; }
+
+		System.setGPoutFloat(4, u);
+
+		/// Modify u to remove dead zone
+		int deadSpace = 3200;
+		int switchArea = 20;
+		if (u > switchArea) { u += deadSpace; }
+		else if (u < -switchArea) { u -= deadSpace; }
+		else { u *= deadSpace / switchArea; }
 		//System.setGPoutFloat(1, errPos);
 		System.setGPoutFloat(2, errVel);
 		System.setGPoutFloat(3, vSet);
-		System.setGPoutFloat(4, u);
 
-		if (u > 6000) u = 6000;
-		if (u < -6000) u = -6000;
 
-		_motor1->setBridgeVoltage(u);
-		_motor2->setBridgeVoltage(-u);
+		/// Limit u
+		if (u > 6000)
+		{
+			u = 6000; error = true;
+		}
+		if (u < -6000)
+		{
+			u = -6000; error = true;
+		}
+		
+
+		System.setGPoutFloat(5, error ? 1000 : -1000);
+
+		_motor1->setBridgeVoltage(-u);
+		_motor2->setBridgeVoltage(u);
 
 	}
 	else {
 		//set motor voltage to zero or it will keep on running...
 		_motor1->setBridgeVoltage(0);
 		_motor2->setBridgeVoltage(0);
+		System.setGPoutFloat(4, 0);
+		//velControl.Reset();
 	}
 	if (testEnabled())
 	{
 		//set motor voltage to max value
-		_motor1->setBridgeVoltage(6000);
-		_motor2->setBridgeVoltage(-6000);
+		_motor1->setBridgeVoltage(-6000);
+		_motor2->setBridgeVoltage(6000);
+		System.setGPoutFloat(4, 6000);
 	}
 }
 
@@ -160,6 +181,8 @@ void Robot::button2callback()
 
 	resetEncoders();
 	resetPendulum();
+	velControl.Reset();
+	posControl.Reset();
 
 	System.println("Reset.");
 }

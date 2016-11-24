@@ -44,6 +44,9 @@ private:
 	Controller posControl;
 	Controller velControl;
 
+	// Debugging
+	bool error = false;
+
 	// Memory
 	int posa1;
 	int posa2;

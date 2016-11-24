@@ -1,4 +1,5 @@
 #pragma once
+#include <WString.h>
 class Controller
 {
 private:
@@ -6,14 +7,14 @@ private:
 	float a;
 	float b;
 	// State memory
-	float e1;
-	float e2;
-	float u1;
-	float u2;
+	float x1;
+	//float x2;
 public:
 	Controller();
 	float NextState(float);
 	void Set(float, float, float);
+	void Reset();
+	String State();
 	~Controller();
 };
 
