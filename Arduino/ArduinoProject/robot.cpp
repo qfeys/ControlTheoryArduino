@@ -1,5 +1,6 @@
 #include "robot.h"
 #include "Controller.h"
+#include "FrictionEstimator.h"
 #include <math.h>
 
 #define ENC1_PINA		18
@@ -51,11 +52,13 @@ void Robot::controllerHook() {
 	int pend_value = _pendulum->readRawValue();
 
 	// Calculate velocity
-	float va = (enc1_value - posa1) / Ts;
-	float vb = (enc2_value - posb1) / Ts;
+	float va = (((enc1_value - posa) / Ts)*2 + vela)/3;
+	float vb = (((enc2_value - posb) / Ts)*2 + velb)/3;
 
-	posa1 = enc1_value;
-	posb1 = enc2_value;
+	posa = enc1_value;
+	vela = va;
+	posb = enc2_value;
+	velb = vb;
 
 	System.setGPoutInt(0, enc1_value);
 	System.setGPoutInt(1, enc2_value);
@@ -64,11 +67,10 @@ void Robot::controllerHook() {
 
 	if (controlEnabled())
 	{
-		//write the control in here
-   //int a = System.getGPinInt(0);
-   //float b = System.getGPinFloat(0);
-   //_motor1 -> setBridgeVoltage(3000 + a * 500 + b*500); 
-   //_motor2 -> setBridgeVoltage(-3000 - a * 500 + b *500); 
+		/// Test Friction predictor
+		//if (!(abs(EstimateFriction(2000, 600) - 2341.98) < 1)) { return; }
+
+
 
 		/// Set Points
 		//int setPoint = System.getGPinInt(1);
@@ -77,23 +79,33 @@ void Robot::controllerHook() {
 
 		//float vSet = posControl.NextState(errPos);
 		float vSet = System.getGPinInt(1);
-		float errVel = vSet*1.35 - va;
+		float errVel = vSet - va;
 		float u = velControl.NextState(errVel);
-
 
 		System.setGPoutFloat(4, u);
 
+		float f = EstimateFriction(u, va);
+
+		System.setGPoutFloat(6, f);
+		u += f;
+
+		/*
 		/// Modify u to remove dead zone
-		int deadSpace = 3200;
-		int switchArea = 20;
-		if (u > switchArea) { u += deadSpace; }
-		else if (u < -switchArea) { u -= deadSpace; }
-		else { u *= deadSpace / switchArea; }
+		int deadSpace = 2900;
+		int transitionSpace = 3300;
+		int transitionArea = 10;
+		if (u > transitionArea) { u += transitionSpace; }
+		else if (u < -transitionArea) { u -= transitionSpace; } 
+		else if (u> 0) { u = u* (transitionSpace - deadSpace) / transitionArea + deadSpace; } 
+		else if (u< 0) { u = u* (transitionSpace - deadSpace) / transitionArea - deadSpace; }
+		*/
+
+
 		//System.setGPoutFloat(1, errPos);
 		System.setGPoutFloat(2, errVel);
 		System.setGPoutFloat(3, vSet);
 
-
+		
 		/// Limit u
 		if (u > 6000)
 		{
@@ -107,6 +119,8 @@ void Robot::controllerHook() {
 
 		System.setGPoutFloat(5, error ? 1000 : -1000);
 
+
+		System.setGPoutFloat(7, u);
 		_motor1->setBridgeVoltage(-u);
 		_motor2->setBridgeVoltage(u);
 

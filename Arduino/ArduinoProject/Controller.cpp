@@ -20,10 +20,12 @@ float Controller::NextState(float error)
 	float u = 0.08*x1 + 0 * error;
 	x1 = x1_new;
 
-	//float u = x1 + 2;
-	//if (u >= 1000) { u = -1000; }
-	//x1 = u;
+	/*
+	float u = x1 + 12;
+	if (u >= 6000) { u = -6000; }
+	x1 = u;*/
 
+	/*
 	if (u > 3000)
 	{
 		u = 3000; 
@@ -31,7 +33,7 @@ float Controller::NextState(float error)
 	if (u < -3000)
 	{
 		u = -3000; 
-	}
+	}*/
 	System.setGPoutFloat(6, x1);
 	return u;
 }
@@ -56,4 +58,15 @@ String Controller::State()
 
 Controller::~Controller()
 {
+}
+
+
+float EstimateFriction(float input, float velocity)
+{
+	float g[6] = { 3518.56 , 0.3 , 0.000870765 , 3.67422e-14 , 1, 1.15386 };
+	float Vel_new = velocity + input * 0.883 * 0.1;
+	float T = g[0] * (tanh(g[1] * Vel_new) - tanh(g[2] * Vel_new))		// Stribeck effect.
+		+ g[3] * tanh(g[4] * Vel_new)								// Coulomb effect.
+		+ g[5] * Vel_new;											// Viscous dissipation term.
+	return T;
 }

@@ -48,10 +48,10 @@ private:
 	bool error = false;
 
 	// Memory
-	int posa1;
-	int posa2;
-	int posb1;
-	int posb2;
+	int posa;
+	int vela;
+	int posb;
+	int velb;
 
 public:
 	Robot(uint8_t ID = 0);

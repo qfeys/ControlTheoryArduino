@@ -18,3 +18,4 @@ public:
 	~Controller();
 };
 
+float EstimateFriction(float, float);
