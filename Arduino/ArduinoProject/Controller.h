@@ -8,7 +8,7 @@ private:
 	float b;
 	// State memory
 	float x1;
-	//float x2;
+	float x2;
 public:
 	Controller();
 	float NextState(float);
