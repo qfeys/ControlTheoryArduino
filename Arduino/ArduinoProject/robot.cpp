@@ -73,12 +73,11 @@ void Robot::controllerHook() {
 
 
 		/// Set Points
-		//int setPoint = System.getGPinInt(1);
-
-		//float errPos = enc1_value - setPoint;
-
-		//float vSet = posControl.NextState(errPos);
-		float vSet = System.getGPinInt(1);
+		int setPoint = System.getGPinInt(1);
+		float errPos = enc1_value - setPoint;
+		// float vSet = posControl.NextState(errPos);
+		float vSet = -errPos;
+		//float vSet = System.getGPinInt(1);
 		float errVel = vSet - va;
 		float u = velControl.NextState(errVel);
 
