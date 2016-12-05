@@ -1,6 +1,5 @@
 #include "robot.h"
 #include "Controller.h"
-#include "FrictionEstimator.h"
 #include <math.h>
 
 #define ENC1_PINA		18
@@ -73,11 +72,13 @@ void Robot::controllerHook() {
 
 
 		/// Set Points
-		int setPoint = System.getGPinInt(1);
-		float errPos = enc1_value - setPoint;
+		// int setPoint = System.getGPinInt(1);
+		// float errPos = enc1_value - setPoint;
 		// float vSet = posControl.NextState(errPos);
-		float vSet = -errPos;
-		//float vSet = System.getGPinInt(1);
+		// float vSet = -errPos;
+		// float vSet = System.getGPinInt(1);
+		t++;
+		float vSet = sin(t / 25.0) * 3000;
 		float errVel = vSet - va;
 		float u = velControl.NextState(errVel);
 

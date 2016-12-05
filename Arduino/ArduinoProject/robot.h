@@ -52,6 +52,7 @@ private:
 	int vela;
 	int posb;
 	int velb;
+	int t;
 
 public:
 	Robot(uint8_t ID = 0);
