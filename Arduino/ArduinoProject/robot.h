@@ -41,8 +41,8 @@ private:
 
 	// Controllers
 	float Ts = 0.01;
-	Controller posControl;
 	Controller velControl;
+	Controller2 angleControl;
 
 	// Debugging
 	bool error = false;
@@ -53,6 +53,8 @@ private:
 	int posb;
 	int velb;
 	int t;
+	int theta0;
+	int direction;
 
 public:
 	Robot(uint8_t ID = 0);

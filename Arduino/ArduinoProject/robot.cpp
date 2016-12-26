@@ -38,8 +38,6 @@ void Robot::init() {
 	//initialize the robot - sort of starting procedure
 	resetEncoders();
 	resetPendulum();
-	velControl.Set(8, 1, Ts);
-	posControl.Set(10, 1, Ts);
 }
 
 void Robot::controllerHook() {
@@ -50,19 +48,23 @@ void Robot::controllerHook() {
 	int enc2_value = _encoder2->readRawValue();
 	int pend_value = _pendulum->readRawValue();
 
-	// Calculate velocity
-	float va = (((enc1_value - posa) / Ts)*2 + vela)/3;
-	float vb = (((enc2_value - posb) / Ts)*2 + velb)/3;
+	// Calculate velocity, incl filtering, in pulses per second (7350 p/meter)
+	float va = (enc1_value - posa) / Ts;
+	float vb = (enc2_value - posb) / Ts;
+	direction = va == 0 ? 0 : va > 0 ? 1 : 0;
 
 	posa = enc1_value;
-	vela = va;
+	vela = (va + vela * 3) / 4;
 	posb = enc2_value;
-	velb = vb;
+	velb = (vb + velb * 3) / 4;
 
 	System.setGPoutInt(0, enc1_value);
 	System.setGPoutInt(1, enc2_value);
 	System.setGPoutInt(2, pend_value);
 	System.setGPoutFloat(0, va);
+	// Pendulum
+	float thetaErr = ((0.0 - pend_value + theta0) * 2.0 * PI / (1024 * 1.0616)) - PI; // In radians
+	System.setGPoutFloat(5, thetaErr * 1000);
 
 	if (controlEnabled())
 	{
@@ -76,32 +78,29 @@ void Robot::controllerHook() {
 		// float errPos = enc1_value - setPoint;
 		// float vSet = posControl.NextState(errPos);
 		// float vSet = -errPos;
-		// float vSet = System.getGPinInt(1);
+
+		/// Set v via theta
+		//float vSet = angleControl.NextState(va / 7350.0, enc1_value / 7350, thetaErr) * 7350;
+
+
+		float vSet = System.getGPinInt(1);
 		t++;
-		float vSet = sin(t / 25.0) * 3000;
+		//float vSet = sin(t / 100.0) * 1000;
+
+		if (vSet > 2400) vSet = 2400;
+		if (vSet < -2400) vSet = -2400;
+
 		float errVel = vSet - va;
 		float u = velControl.NextState(errVel);
 
 		System.setGPoutFloat(4, u);
 
-		float f = EstimateFriction(u, va);
+		float f = EstimateFriction2(vSet, direction);
 
 		System.setGPoutFloat(6, f);
 		u += f;
 
-		/*
-		/// Modify u to remove dead zone
-		int deadSpace = 2900;
-		int transitionSpace = 3300;
-		int transitionArea = 10;
-		if (u > transitionArea) { u += transitionSpace; }
-		else if (u < -transitionArea) { u -= transitionSpace; } 
-		else if (u> 0) { u = u* (transitionSpace - deadSpace) / transitionArea + deadSpace; } 
-		else if (u< 0) { u = u* (transitionSpace - deadSpace) / transitionArea - deadSpace; }
-		*/
-
-
-		//System.setGPoutFloat(1, errPos);
+		
 		System.setGPoutFloat(2, errVel);
 		System.setGPoutFloat(3, vSet);
 
@@ -117,7 +116,7 @@ void Robot::controllerHook() {
 		}
 		
 
-		System.setGPoutFloat(5, error ? 1000 : -1000);
+		//System.setGPoutFloat(5, error ? 1000 : -1000);
 
 
 		System.setGPoutFloat(7, u);
@@ -151,6 +150,7 @@ void Robot::resetEncoders()
 void Robot::resetPendulum()
 {
 	_pendulum->setOffset(_pendulum->readRawValue());
+	theta0 = _pendulum->readRawValue();
 }
 
 uint8_t Robot::id()
@@ -196,7 +196,7 @@ void Robot::button2callback()
 	resetEncoders();
 	resetPendulum();
 	velControl.Reset();
-	posControl.Reset();
+	angleControl.Reset();
 
 	System.println("Reset.");
 }
