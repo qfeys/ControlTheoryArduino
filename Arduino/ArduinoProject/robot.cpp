@@ -51,10 +51,10 @@ void Robot::controllerHook() {
 	// Calculate velocity, incl filtering, in pulses per second (7350 p/meter)
 	float va = (enc1_value - posa) / Ts;
 	float vb = (enc2_value - posb) / Ts;
-	direction = va == 0 ? 0 : va > 0 ? 1 : 0;
+	direction = va == 0 ? 0 : va > 0 ? 1 : -1;
 
 	posa = enc1_value;
-	vela = (va + vela * 3) / 4;
+	vela = (va + vela * 3) / 4;			// filtering: 1/4 * 1/(s-3)
 	posb = enc2_value;
 	velb = (vb + velb * 3) / 4;
 
@@ -68,55 +68,38 @@ void Robot::controllerHook() {
 
 	if (controlEnabled())
 	{
-		/// Test Friction predictor
-		//if (!(abs(EstimateFriction(2000, 600) - 2341.98) < 1)) { return; }
+		/// Set velocity:
+		// float vSet = System.getGPinInt(1);
 
+		/// Test response:
+		// t++;
+		// float vSet = sin(t  /40000.0* t) * 1000;
 
-
-		/// Set Points
-		// int setPoint = System.getGPinInt(1);
-		// float errPos = enc1_value - setPoint;
-		// float vSet = posControl.NextState(errPos);
-		// float vSet = -errPos;
+		/// Set Position
+		int setPoint = System.getGPinInt(1);
+		float errPos = enc1_value - setPoint;
+		float vSet = -8 * errPos;
 
 		/// Set v via theta
-		//float vSet = angleControl.NextState(va / 7350.0, enc1_value / 7350, thetaErr) * 7350;
+		// float vSet = angleControl.NextState(va / 7350.0, enc1_value / 7350, thetaErr) * 7350;
 
-
-		float vSet = System.getGPinInt(1);
-		t++;
-		//float vSet = sin(t / 100.0) * 1000;
-
+		/// Limit velocity to something archiveble
 		if (vSet > 2400) vSet = 2400;
 		if (vSet < -2400) vSet = -2400;
 
 		float errVel = vSet - va;
 		float u = velControl.NextState(errVel);
-
-		System.setGPoutFloat(4, u);
-
 		float f = EstimateFriction2(vSet, direction);
 
-		System.setGPoutFloat(6, f);
+		System.setGPoutFloat(4, u);
 		u += f;
-
-		
+		System.setGPoutFloat(6, f);
 		System.setGPoutFloat(2, errVel);
 		System.setGPoutFloat(3, vSet);
 
-		
-		/// Limit u
-		if (u > 6000)
-		{
-			u = 6000; error = true;
-		}
-		if (u < -6000)
-		{
-			u = -6000; error = true;
-		}
-		
-
-		//System.setGPoutFloat(5, error ? 1000 : -1000);
+		/// Limit u to something archieveble
+		if (u > 6000) u = 6000;
+		if (u < -6000) u = -6000;
 
 
 		System.setGPoutFloat(7, u);
@@ -197,6 +180,7 @@ void Robot::button2callback()
 	resetPendulum();
 	velControl.Reset();
 	angleControl.Reset();
+	t = 0;
 
 	System.println("Reset.");
 }

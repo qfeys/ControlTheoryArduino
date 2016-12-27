@@ -11,31 +11,13 @@ Controller::Controller()
 
 float Controller::NextState(float error)
 {
-
-	//float u = -a / (4 + a + b)*(error + 2 * e1 + e2) - (2 * a - 8) / (4 + a + b)*u1 + u2;
-	//float u = -error*System.getGPinFloat(0) + u1*System.getGPinFloat(1) - (u2 - u1)*System.getGPinFloat(2);
-	
-	/// Update state:
+	/// Update state:	In this implementation, x2 is not used
 	float x1_new = 1* x1 + 0 * x2 + 0.2 * error;
 	float x2_new = 0 * x1 + 0 * x2 + 0*error;
 	float u = 0.15*x1 + 0*x2 + 3 * error;
 	x1 = x1_new;
 	x2 = x2_new;
 
-	/*
-	float u = 1500*sin(x1*(x1*0.1+1));
-	x1 += 0.01;
-	*/
-
-	/*
-	if (u > 3000)
-	{
-		u = 3000; 
-	}
-	if (u < -3000)
-	{
-		u = -3000; 
-	}*/
 	System.setGPoutFloat(6, x1);
 	return u;
 }
@@ -44,13 +26,6 @@ void Controller::Reset()
 {
 	x1 = 0;
 	x2 = 0;
-}
-
-String Controller::State()
-{
-	String s = "";
-	return s; // + "u1: " + u1 + ", u2:" + u2 + ", e1: " + e1 + ", e2: " + e2;
-	//return s.concat("u1: ").concat(u1).concat(", u2:").concat(u2).concat(", e1: ").concat(e1).concat(", e2: ").concat(e2);
 }
 
 Controller::~Controller()
@@ -69,24 +44,25 @@ Controller2::Controller2()
 float Controller2::NextState(float velocity, float position, float theta)
 {
 	// Estimate State
-	// A = [[1, 0, 0][0, 1.004, 0.01001],[0, 0.8186, 1.004]]
-	// B = [[0, -0.08345, -0.03409]]
-	// C = [[ 1, 0, 0][ 0, 1, 0]]
-	// D = [[0, 0]]
-	// L = [[0.9410, 0, 0][0, 0.9540, 1.6372]]
-	// K = [-3.1748, -4.4525, -0.3453]
-	float err1 = position - 1 * q1;
-	float err2 = theta - 1 * q2;
-	float q1n = 1 * q1 + err1 * 0.6180;
-	float q2n = 1.004*q2 + 0.01001*q3 - 0.08345*velocity + 0.6387 * err2;
-	float q3n = 0.8186*q2 + 1.004 * q3 - 0.03409 * velocity + 1.6372*err2;
+	float A[3][3] = { {1, 0, 0},{0, 1.004, 0.01001},{0, 0.8186, 1.004} };
+	float B[3]    = { 0, -0.08345, -0.03409 };
+	float C[2][3] = { { 1, 0, 0},{ 0, 1, 0}};
+	float D[2]    = { 0, 0 };
+	float L[2][3] = { {0.6180, 0, 0},{0, 0.6387, 1.6372} };
+	float K[3]    = { -0.9008, -2.4713, -0.2545 };
+
+	float err1 = position - C[0][0] * q1 - C[0][1] * q2 - C[0][2] * q3;
+	float err2 = theta    - C[1][0] * q1 - C[1][1] * q2 - C[1][2] * q3;
+	float q1n = A[0][0] * q1 + A[0][1] * q2 + A[0][2] * q3 + B[0] * velocity + L[0][0] * err1 + L[1][0] * err2;
+	float q2n = A[1][0] * q1 + A[1][1] * q2 + A[1][2] * q3 + B[1] * velocity + L[0][1] * err1 + L[1][1] * err2;
+	float q3n = A[2][0] * q1 + A[2][1] * q2 + A[2][2] * q3 + B[2] * velocity + L[0][2] * err1 + L[1][2] * err2;
 
 	q1 = q1n;
 	q2 = q2n;
 	q3 = q3n;
 
 	// calculate control
-	return -(-0.9008 * q1 - 2.4713 * q2 - 0.2545 * q3);
+	return -(K[0] * q1 + K[1] * q2 + K[2] * q3);
 
 }
 
@@ -101,7 +77,7 @@ Controller2::~Controller2()
 {
 }
 
-
+/// Depricated
 float EstimateFriction(float input, float velocity)
 {
 	float g[6] = { 3000 , 0.3 , 0.08 , 1500 , 1, 1 };
@@ -114,7 +90,8 @@ float EstimateFriction(float input, float velocity)
 
 float EstimateFriction2(float input, float direction)
 {
-	float T = input*1.5 + 2200 * (input > 0 ? 1 : -1);	// viscous + coulomb effect
+	float T = input*1.3 + 2000 * (input > 0 ? 1 : -1);	// viscous + coulomb effect
+	//float T = input*1 + 1000 * (input > 0 ? 1 : -1);	// viscous + coulomb effect
 	T += (input*direction > 0 ? 0 : (input > 0 ? 1 : -1)) * 2000;	// strikeback effect
 	return T;
 }

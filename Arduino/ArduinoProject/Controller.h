@@ -10,7 +10,6 @@ public:
 	Controller();
 	float NextState(float);
 	void Reset();
-	String State();
 	~Controller();
 };
 

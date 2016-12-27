@@ -44,9 +44,6 @@ private:
 	Controller velControl;
 	Controller2 angleControl;
 
-	// Debugging
-	bool error = false;
-
 	// Memory
 	int posa;
 	int vela;
