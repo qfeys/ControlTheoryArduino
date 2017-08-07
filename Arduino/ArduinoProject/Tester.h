@@ -4,7 +4,8 @@ class Tester
 public:
 	Tester();
 	~Tester();
-	int TestMotor1();
+	int TestRandom();
+	int TestSinus();
 private:
 	int counter;
 	bool forward;
