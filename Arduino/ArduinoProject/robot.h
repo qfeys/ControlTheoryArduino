@@ -15,6 +15,7 @@
 #include <sharp41S.h>
 #include <l293d.h>
 #include "Controller.h"
+#include "Tester.h"
 
 class Robot
 {
@@ -43,13 +44,13 @@ private:
 	float Ts = 0.01;
 	Controller velControl;
 	Controller2 angleControl;
+	Tester tester;
 
 	// Memory
-	int posa;
-	int vela;
-	int posb;
-	int velb;
-	int t;
+	int posWheelA;
+	int velWheelA;
+	int posWheelB;
+	int velWheelB;
 	int theta0;
 	int direction;
 

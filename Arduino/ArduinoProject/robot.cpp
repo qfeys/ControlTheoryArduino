@@ -1,5 +1,6 @@
 #include "robot.h"
 #include "Controller.h"
+#include "Tester.h"
 #include <math.h>
 
 #define ENC1_PINA		18
@@ -49,14 +50,14 @@ void Robot::controllerHook() {
 	int pend_value = _pendulum->readRawValue();
 
 	// Calculate velocity, incl filtering, in pulses per second (7350 p/meter)
-	float va = (enc1_value - posa) / Ts;
-	float vb = (enc2_value - posb) / Ts;
+	float va = (enc1_value - posWheelA) / Ts;
+	float vb = (enc2_value - posWheelB) / Ts;
 	direction = va == 0 ? 0 : va > 0 ? 1 : -1;
 
-	posa = enc1_value;
-	vela = (va + vela * 3) / 4;			// filtering: 1/4 * 1/(s-3)
-	posb = enc2_value;
-	velb = (vb + velb * 3) / 4;
+	posWheelA = enc1_value;
+	velWheelA = (va + velWheelA * 3) / 4;			// filtering: 1/4 * 1/(s-3)
+	posWheelB = enc2_value;
+	velWheelB = (vb + velWheelB * 3) / 4;
 
 	System.setGPoutInt(0, enc1_value);
 	System.setGPoutInt(1, enc2_value);
@@ -88,23 +89,23 @@ void Robot::controllerHook() {
 		if (vSet < -2400) vSet = -2400;
 
 		float errVel = vSet - va;
-		float u = velControl.NextState(errVel);
-		float f = EstimateFriction2(vSet, direction);
+		float motorControlValue = velControl.NextState(errVel);
+		float estimFriction = EstimateFriction2(vSet, direction);
 
-		System.setGPoutFloat(4, u);
-		u += f;
-		System.setGPoutFloat(6, f);
+		System.setGPoutFloat(4, motorControlValue);
+		motorControlValue += estimFriction;
+		System.setGPoutFloat(6, estimFriction);
 		System.setGPoutFloat(2, errVel);
 		System.setGPoutFloat(3, vSet);
 
 		/// Limit u to something archieveble
-		if (u > 6000) u = 6000;
-		if (u < -6000) u = -6000;
+		if (motorControlValue > 6000) motorControlValue = 6000;
+		if (motorControlValue < -6000) motorControlValue = -6000;
 
 
-		System.setGPoutFloat(7, u);
-		_motor1->setBridgeVoltage(-u);
-		_motor2->setBridgeVoltage(u);
+		System.setGPoutFloat(7, motorControlValue);
+		_motor1->setBridgeVoltage(-motorControlValue);
+		_motor2->setBridgeVoltage(motorControlValue);
 
 	}
 	else {
@@ -117,9 +118,10 @@ void Robot::controllerHook() {
 	if (testEnabled())
 	{
 		//set motor voltage to max value
-		_motor1->setBridgeVoltage(-6000);
-		_motor2->setBridgeVoltage(6000);
-		System.setGPoutFloat(4, 6000);
+		int voltage = tester.TestMotor1();
+		_motor1->setBridgeVoltage(voltage);
+		_motor2->setBridgeVoltage(-voltage);
+		System.setGPoutFloat(4, voltage);
 	}
 }
 
@@ -180,7 +182,6 @@ void Robot::button2callback()
 	resetPendulum();
 	velControl.Reset();
 	angleControl.Reset();
-	t = 0;
 
 	System.println("Reset.");
 }
