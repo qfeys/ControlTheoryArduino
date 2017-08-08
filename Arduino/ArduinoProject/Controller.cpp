@@ -12,13 +12,22 @@ Controller::Controller()
 float Controller::NextState(float error)
 {
 	/// Update state:	In this implementation, x2 is not used
-	float x1_new = 1* x1 + 0 * x2 + 0.2 * error;
-	float x2_new = 0 * x1 + 0 * x2 + 0*error;
-	float u = 0.15*x1 + 0*x2 + 3 * error;
+	float x1_new = 1 * x1 + 2 * error;
+	float u = 1.8*x1 + 13.8 * error;
 	x1 = x1_new;
-	x2 = x2_new;
 
-	System.setGPoutFloat(6, x1);
+	System.setGPoutFloat(7, x1);
+	return u;
+}
+
+float Controller::NextState(float error, float A, float B, float C, float D)
+{
+	/// Update state:	In this implementation, x2 is not used
+	float x1_new = A * x1 + B * error;
+	float u = C*x1 + D * error;
+	x1 = x1_new;
+
+	System.setGPoutFloat(7, x1);
 	return u;
 }
 

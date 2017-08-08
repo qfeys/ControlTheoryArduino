@@ -9,6 +9,7 @@ private:
 public:
 	Controller();
 	float NextState(float);
+	float NextState(float error, float A, float B, float C, float D);
 	void Reset();
 	~Controller();
 };

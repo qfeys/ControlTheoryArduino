@@ -70,12 +70,12 @@ void Robot::controllerHook() {
 	if (controlEnabled())
 	{
 		/// Set velocity:
-		 float vSet = System.getGPinInt(1);
+		 //float vSet = System.getGPinInt(1);
 
 		/// Set Position
-		//int setPoint = System.getGPinInt(1);
-		//float errPos = enc1_value - setPoint;
-		//float vSet = -8 * errPos;
+		int setPoint = System.getGPinInt(1);
+		float errPos = enc1_value - setPoint;
+		float vSet = -8 * errPos;
 
 		/// Set v via theta
 		//float vSet = angleControl.NextState(va / 7350.0, enc1_value / 7350, thetaErr) * 7350;
@@ -86,6 +86,7 @@ void Robot::controllerHook() {
 
 		float errVel = vSet - va;
 		float motorControlValue = velControl.NextState(errVel);
+		//float motorControlValue = velControl.NextState(errVel, System.getGPinFloat(3), System.getGPinFloat(4), System.getGPinFloat(5), System.getGPinFloat(6));
 		float estimFriction = EstimateFriction2(vSet, direction);
 
 		System.setGPoutFloat(4, motorControlValue);
