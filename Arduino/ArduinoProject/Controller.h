@@ -25,7 +25,7 @@ public:
 
 private:
 	// State memory
-	float d;
+	float q1;
 	float q2;
 	float q3;
 

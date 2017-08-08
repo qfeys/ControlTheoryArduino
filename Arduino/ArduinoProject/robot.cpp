@@ -71,7 +71,7 @@ void Robot::controllerHook() {
 	System.setGPoutInt(3, light_value);
 	System.setGPoutFloat(0, va);
 	// Pendulum
-	float thetaErr = ((0.0 - pend_value + theta0) * 2.0 * PI / (1024 * 1.0616)) - PI; // In radians
+	float thetaErr = ((0.0 - pend_value + theta0) * 2.0 * PI / (1024 * 1.0616)); // In radians
 	System.setGPoutFloat(5, thetaErr * 1000);
 
 	if (controlEnabled())
@@ -80,14 +80,14 @@ void Robot::controllerHook() {
 		 //float vSet = System.getGPinInt(1);
 
 		/// Set Position
-		int setPoint = System.getGPinInt(1);
-		//int setPoint = tester.TestPosition();
-		float errPos = enc1_value - setPoint;
-		System.setGPoutFloat(1, errPos);
-		float vSet = -System.getGPinFloat(2) * errPos;
+		//int setPoint = System.getGPinInt(1);
+		////int setPoint = tester.TestPosition();
+		//float errPos = enc1_value - setPoint;
+		//System.setGPoutFloat(1, errPos);
+		//float vSet = -System.getGPinFloat(2) * errPos;
 
 		/// Set v via theta
-		//float vSet = angleControl.NextState(va / 7350.0, enc1_value / 7350, thetaErr) * 7350;
+		float vSet = angleControl.NextState(va / 7350.0, enc1_value / 7350, thetaErr) * 7350;
 
 		/// Limit velocity to something archiveble
 		if (vSet > 2400) vSet = 2400;
