@@ -14,7 +14,7 @@ float SensorEstimator::EstimateNext(float e, float l)
 	float B[2] = { 0, 0.01};
 	float C[2][2] = { { 0, 1 },{ 1, -1} };
 	float D[2] = { 0.01, -0.01 };
-	float L[2][2] = { { 0.9, 0.9 },{ 0.9, 0.9 } };
+	float L[2][2] = { { 0.04, 0.04 },{ 0.04, 0.0 } };
 	float K[2] = { 0, 1 };
 
 	float errE = e - C[0][0] * d - C[0][1] * s;
@@ -30,6 +30,11 @@ float SensorEstimator::EstimateNext(float e, float l)
 	return (K[0] * d + K[1] * s);
 }
 
+void SensorEstimator::Reset(float l)
+{
+	d = l;
+}
+
 
 SensorEstimator::~SensorEstimator()
 {
@@ -41,5 +46,5 @@ float ConvertLaserData(float data)
 {
 	// 3 - 640
 	// 30 - 80
-	return 338.57 - 0.482;
+	return 338.57 - 0.482 * data;
 }

@@ -52,14 +52,15 @@ void Robot::controllerHook() {
 	int pend_value = _pendulum->readRawValue();
 	float light_value = ConvertLaserData(_distance1->readRawValue());
 
-	float pos = estimator.EstimateNext(enc1_value / 735.0, light_value);
+	//float pos = estimator.EstimateNext(enc1_value / 735.0, light_value) * 735;
+	float pos = enc1_value;
 
 	// Calculate velocity, incl filtering, in pulses per second (7350 p/meter)
-	float va = (enc1_value - posWheelA) / Ts;
+	float va = (pos - posWheelA) / Ts;
 	float vb = (enc2_value - posWheelB) / Ts;
 	direction = va == 0 ? 0 : va > 0 ? 1 : -1;
 
-	posWheelA = enc1_value;
+	posWheelA = pos;
 	velWheelA = va;// (va + velWheelA * 3) / 4;			// filtering: 1/4 * 1/(s-3)
 	posWheelB = enc2_value;
 	velWheelB = vb;// (vb + velWheelB * 3) / 4;
@@ -79,8 +80,8 @@ void Robot::controllerHook() {
 		 //float vSet = System.getGPinInt(1);
 
 		/// Set Position
-		//int setPoint = System.getGPinInt(1);
-		int setPoint = tester.TestPosition();
+		int setPoint = System.getGPinInt(1);
+		//int setPoint = tester.TestPosition();
 		float errPos = enc1_value - setPoint;
 		System.setGPoutFloat(1, errPos);
 		float vSet = -System.getGPinFloat(2) * errPos;
@@ -189,6 +190,7 @@ void Robot::button2callback()
 	resetPendulum();
 	velControl.Reset();
 	angleControl.Reset();
+	estimator.Reset(ConvertLaserData(_distance1->readRawValue()));
 
 	System.println("Reset.");
 }
