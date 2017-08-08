@@ -7,7 +7,7 @@ SensorEstimator::SensorEstimator(float l)
 	d = l;
 }
 
-float SensorEstimator::EstimateNext(float e, float l, float v)
+float SensorEstimator::EstimateNext(float e, float l)
 {
 	// Estimate State
 	float A[2][2] = { { 1, 0 },{ 0, 1 } };
@@ -22,6 +22,7 @@ float SensorEstimator::EstimateNext(float e, float l, float v)
 	float dn = A[0][0] * d + A[0][1] * s  + B[0] * v + L[0][0] * errE + L[1][0] * errL;
 	float sn = A[1][0] * d + A[1][1] * s  + B[1] * v + L[0][1] * errE + L[1][1] * errL;
 
+	v = (sn - s) / 0.01;
 	d = dn;
 	s = sn;
 
@@ -33,4 +34,12 @@ float SensorEstimator::EstimateNext(float e, float l, float v)
 SensorEstimator::~SensorEstimator()
 {
 
+}
+
+/// Converts the laser output to mm
+float ConvertLaserData(float data)
+{
+	// 3 - 640
+	// 30 - 80
+	return 338.57 - 0.482;
 }

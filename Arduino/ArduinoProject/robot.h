@@ -46,6 +46,7 @@ private:
 	Controller velControl;
 	Controller2 angleControl;
 	Tester tester;
+	SensorEstimator estimator;
 
 	// Memory
 	int posWheelA;

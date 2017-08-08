@@ -22,18 +22,19 @@
 #define BATTERY_VOLTAGE	6000
 
 
-Robot::Robot(uint8_t ID):
+Robot::Robot(uint8_t ID) :
 	_ID(ID),
 	_type(20),
-	_encoder1(new EncoderSensor(ENC1_PINA,ENC1_PINB)),
-	_encoder2(new EncoderSensor(ENC2_PINA,ENC2_PINB)),
+	_encoder1(new EncoderSensor(ENC1_PINA, ENC1_PINB)),
+	_encoder2(new EncoderSensor(ENC2_PINA, ENC2_PINB)),
 	_distance1(new Sharp41S(DIST1_PIN)),
 	_distance2(new Sharp41S(DIST2_PIN)),
-	_pendulum(new AnalogSensor(PENDULUM_PIN,12)),
-	_motor1(new L293D(MOT1_PIN_IN1,MOT1_PIN_IN2,MOT1_PIN_EN,BATTERY_VOLTAGE)),
-	_motor2(new L293D(MOT2_PIN_IN1,MOT2_PIN_IN2,MOT2_PIN_EN,BATTERY_VOLTAGE))
+	_pendulum(new AnalogSensor(PENDULUM_PIN, 12)),
+	_motor1(new L293D(MOT1_PIN_IN1, MOT1_PIN_IN2, MOT1_PIN_EN, BATTERY_VOLTAGE)),
+	_motor2(new L293D(MOT2_PIN_IN1, MOT2_PIN_IN2, MOT2_PIN_EN, BATTERY_VOLTAGE)),
+	estimator(ConvertLaserData(_distance1->readRawValue()))
 {
-	_pendulum->setScale(2.0f*M_PI/1023.0f);
+	_pendulum->setScale(2.0f*M_PI / 1023.0f);
 }
 
 void Robot::init() {
@@ -49,6 +50,9 @@ void Robot::controllerHook() {
 	int enc1_value = -_encoder1->readRawValue();
 	int enc2_value = _encoder2->readRawValue();
 	int pend_value = _pendulum->readRawValue();
+	float light_value = ConvertLaserData(_distance1->readRawValue());
+
+	float pos = estimator.EstimateNext(enc1_value / 735.0, light_value);
 
 	// Calculate velocity, incl filtering, in pulses per second (7350 p/meter)
 	float va = (enc1_value - posWheelA) / Ts;
@@ -63,6 +67,7 @@ void Robot::controllerHook() {
 	System.setGPoutInt(0, enc1_value);
 	System.setGPoutInt(1, enc2_value);
 	System.setGPoutInt(2, pend_value);
+	System.setGPoutInt(3, light_value);
 	System.setGPoutFloat(0, va);
 	// Pendulum
 	float thetaErr = ((0.0 - pend_value + theta0) * 2.0 * PI / (1024 * 1.0616)) - PI; // In radians
