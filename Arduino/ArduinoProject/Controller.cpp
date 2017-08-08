@@ -44,7 +44,7 @@ Controller::~Controller()
 
 Controller2::Controller2()
 {
-	q1 = 0;
+	d = 0;
 	q2 = 0;
 	q3 = 0;
 }
@@ -60,24 +60,24 @@ float Controller2::NextState(float velocity, float position, float theta)
 	float L[2][3] = { {0.6180, 0, 0},{0, 0.6387, 1.6372} };
 	float K[3]    = { -0.9008, -2.4713, -0.2545 };
 
-	float err1 = position - C[0][0] * q1 - C[0][1] * q2 - C[0][2] * q3;
-	float err2 = theta    - C[1][0] * q1 - C[1][1] * q2 - C[1][2] * q3;
-	float q1n = A[0][0] * q1 + A[0][1] * q2 + A[0][2] * q3 + B[0] * velocity + L[0][0] * err1 + L[1][0] * err2;
-	float q2n = A[1][0] * q1 + A[1][1] * q2 + A[1][2] * q3 + B[1] * velocity + L[0][1] * err1 + L[1][1] * err2;
-	float q3n = A[2][0] * q1 + A[2][1] * q2 + A[2][2] * q3 + B[2] * velocity + L[0][2] * err1 + L[1][2] * err2;
+	float err1 = position - C[0][0] * d - C[0][1] * q2 - C[0][2] * q3;
+	float err2 = theta    - C[1][0] * d - C[1][1] * q2 - C[1][2] * q3;
+	float q1n = A[0][0] * d + A[0][1] * q2 + A[0][2] * q3 + B[0] * velocity + L[0][0] * err1 + L[1][0] * err2;
+	float q2n = A[1][0] * d + A[1][1] * q2 + A[1][2] * q3 + B[1] * velocity + L[0][1] * err1 + L[1][1] * err2;
+	float q3n = A[2][0] * d + A[2][1] * q2 + A[2][2] * q3 + B[2] * velocity + L[0][2] * err1 + L[1][2] * err2;
 
-	q1 = q1n;
+	d = q1n;
 	q2 = q2n;
 	q3 = q3n;
 
 	// calculate control
-	return -(K[0] * q1 + K[1] * q2 + K[2] * q3);
+	return -(K[0] * d + K[1] * q2 + K[2] * q3);
 
 }
 
 void Controller2::Reset()
 {
-	q1 = 0;
+	d = 0;
 	q2 = 0;
 	q3 = 0;
 }

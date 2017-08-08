@@ -16,6 +16,7 @@
 #include <l293d.h>
 #include "Controller.h"
 #include "Tester.h"
+#include "SensorEstimator.h"
 
 class Robot
 {

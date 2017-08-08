@@ -7,6 +7,7 @@ public:
 	int TestRandom();
 	int TestRandom2();
 	int TestSinus();
+	int TestPosition();
 private:
 	int counter;
 	bool forward;

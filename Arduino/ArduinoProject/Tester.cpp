@@ -42,3 +42,10 @@ int Tester::TestSinus()
 	counter++;
 	return sin(counter / 50.0) * 3000;
 }
+
+int Tester::TestPosition()
+{
+	counter++;
+	if (counter == 1200) counter = 0;
+	return (counter / 50) * 100;
+}

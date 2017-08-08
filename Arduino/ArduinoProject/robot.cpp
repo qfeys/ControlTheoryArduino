@@ -1,6 +1,7 @@
 #include "robot.h"
 #include "Controller.h"
 #include "Tester.h"
+#include "SensorEstimator.h"
 #include <math.h>
 
 #define ENC1_PINA		18
@@ -73,9 +74,11 @@ void Robot::controllerHook() {
 		 //float vSet = System.getGPinInt(1);
 
 		/// Set Position
-		int setPoint = System.getGPinInt(1);
+		//int setPoint = System.getGPinInt(1);
+		int setPoint = tester.TestPosition();
 		float errPos = enc1_value - setPoint;
-		float vSet = -8 * errPos;
+		System.setGPoutFloat(1, errPos);
+		float vSet = -System.getGPinFloat(2) * errPos;
 
 		/// Set v via theta
 		//float vSet = angleControl.NextState(va / 7350.0, enc1_value / 7350, thetaErr) * 7350;
