@@ -90,7 +90,7 @@ float EstimateFriction(float input, float velocity)
 
 float EstimateFriction2(float input, float direction)
 {
-	float T = input*1.3 + 2000 * (input > 0 ? 1 : -1);	// viscous + coulomb effect
+	float T = input*1.3 + 500 * (input > 0 ? 1 : -1);	// viscous + coulomb effect
 	//float T = input*1 + 1000 * (input > 0 ? 1 : -1);	// viscous + coulomb effect
 	T += (input*direction > 0 ? 0 : (input > 0 ? 1 : -1)) * 2000;	// strikeback effect
 	return T;

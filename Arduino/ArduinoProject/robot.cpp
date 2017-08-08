@@ -70,7 +70,7 @@ void Robot::controllerHook() {
 	if (controlEnabled())
 	{
 		/// Set velocity:
-		// float vSet = System.getGPinInt(1);
+		 float vSet = System.getGPinInt(1);
 
 		/// Set Position
 		//int setPoint = System.getGPinInt(1);
@@ -78,7 +78,7 @@ void Robot::controllerHook() {
 		//float vSet = -8 * errPos;
 
 		/// Set v via theta
-		float vSet = angleControl.NextState(va / 7350.0, enc1_value / 7350, thetaErr) * 7350;
+		//float vSet = angleControl.NextState(va / 7350.0, enc1_value / 7350, thetaErr) * 7350;
 
 		/// Limit velocity to something archiveble
 		if (vSet > 2400) vSet = 2400;
@@ -114,12 +114,12 @@ void Robot::controllerHook() {
 	if (testEnabled())
 	{
 		//set motor voltage to max value
-		int setPoint = tester.TestRandom();
-		int voltage = setPoint; // EstimateFriction2(setPoint, direction);
+		int setPoint = tester.TestRandom2();
+		int voltage = EstimateFriction2(setPoint, direction);
 		_motor1->setBridgeVoltage(voltage);
 		_motor2->setBridgeVoltage(-voltage);
-		System.setGPoutFloat(3, setPoint);
-		System.setGPoutFloat(4, voltage);
+		System.setGPoutFloat(3, -setPoint);
+		System.setGPoutFloat(4, -voltage);
 	}
 }
 

@@ -18,9 +18,21 @@ int Tester::TestRandom()
 	counter--;
 	if (counter <= 0)
 	{
-		counter = 3; // random(10) + 1;
+		counter = random(90) + 10;
 		// forward = !forward;
-		voltage = random(-6000, 6000);
+		voltage = random(-3000, 3000);
+	}
+	return voltage;
+}
+
+int Tester::TestRandom2()
+{
+	counter--;
+	voltage += (setpoint - voltage) / 5;
+	if (counter <= 0)
+	{
+		counter = 5;
+		setpoint += random(-500, 500) - setpoint / 20;
 	}
 	return voltage;
 }
