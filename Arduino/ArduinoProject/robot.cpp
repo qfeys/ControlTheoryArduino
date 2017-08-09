@@ -32,7 +32,7 @@ Robot::Robot(uint8_t ID) :
 	_pendulum(new AnalogSensor(PENDULUM_PIN, 12)),
 	_motor1(new L293D(MOT1_PIN_IN1, MOT1_PIN_IN2, MOT1_PIN_EN, BATTERY_VOLTAGE)),
 	_motor2(new L293D(MOT2_PIN_IN1, MOT2_PIN_IN2, MOT2_PIN_EN, BATTERY_VOLTAGE)),
-	estimator(ConvertLaserData(_distance1->readRawValue()))
+	estimator(ConvertLaserData(_distance2->readRawValue()))
 {
 	_pendulum->setScale(2.0f*M_PI / 1023.0f);
 }
@@ -50,7 +50,7 @@ void Robot::controllerHook() {
 	int enc1_value = -_encoder1->readRawValue();
 	int enc2_value = _encoder2->readRawValue();
 	int pend_value = _pendulum->readRawValue();
-	float light_value = ConvertLaserData(_distance1->readRawValue());
+	float light_value = ConvertLaserData(_distance2->readRawValue());
 
 	//float pos = estimator.EstimateNext(enc1_value / 735.0, light_value) * 735;
 	float pos = enc1_value;
@@ -72,26 +72,28 @@ void Robot::controllerHook() {
 	System.setGPoutFloat(0, va);
 	// Pendulum
 	float thetaErr = ((0.0 - pend_value + theta0) * 2.0 * PI / (1024 * 1.0616)); // In radians
-	System.setGPoutFloat(5, thetaErr * 1000);
+	System.setGPoutFloat(5, thetaErr > 0.1 ? 1000 : thetaErr < -0.1 ? -1000 : thetaErr * 10000);
 
 	if (controlEnabled())
 	{
 		/// Set velocity:
-		 //float vSet = System.getGPinInt(1);
+		//float vSet = System.getGPinInt(1);
 
 		/// Set Position
 		//int setPoint = System.getGPinInt(1);
 		////int setPoint = tester.TestPosition();
 		//float errPos = enc1_value - setPoint;
 		//System.setGPoutFloat(1, errPos);
-		//float vSet = -System.getGPinFloat(2) * errPos;
+		//float vSet = -12 * errPos;
 
 		/// Set v via theta
 		float vSet = angleControl.NextState(va / 7350.0, enc1_value / 7350, thetaErr) * 7350;
+		if (thetaErr > PI / 4 || thetaErr < -PI / 4)
+			vSet = 0;
 
 		/// Limit velocity to something archiveble
-		if (vSet > 2400) vSet = 2400;
-		if (vSet < -2400) vSet = -2400;
+		if (vSet > 2600) vSet = 2600;
+		if (vSet < -2600) vSet = -2600;
 
 		float errVel = vSet - va;
 		float motorControlValue = velControl.NextState(errVel);
@@ -102,7 +104,7 @@ void Robot::controllerHook() {
 		motorControlValue += estimFriction;
 		System.setGPoutFloat(6, estimFriction);
 		System.setGPoutFloat(2, errVel);
-		System.setGPoutFloat(3, vSet);
+		System.setGPoutFloat(3, vSet > 1000 ? 1000 : vSet < -1000 ? -1000 : vSet);
 
 		/// Limit u to something archieveble
 		if (motorControlValue > 6000) motorControlValue = 6000;
@@ -190,7 +192,7 @@ void Robot::button2callback()
 	resetPendulum();
 	velControl.Reset();
 	angleControl.Reset();
-	estimator.Reset(ConvertLaserData(_distance1->readRawValue()));
+	estimator.Reset(ConvertLaserData(_distance2->readRawValue()));
 
 	System.println("Reset.");
 }
